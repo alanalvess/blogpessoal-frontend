@@ -3,11 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { AuthContext } from '../../../contexts/AuthContext';
 import Tema from '../../../models/Tema';
 import { atualizar, buscar, cadastrar } from '../../../services/Service';
+import { RotatingLines } from 'react-loader-spinner';
 
 function FormularioTema() {
     const navigate = useNavigate();
 
     const [tema, setTema] = useState<Tema>({} as Tema);
+    const [isLoading, setIsLoading] = useState<boolean>(false)
 
     const { id } = useParams<{ id: string }>();
 
@@ -41,6 +43,7 @@ function FormularioTema() {
 
     async function gerarNovoTema(e: ChangeEvent<HTMLFormElement>) {
         e.preventDefault()
+        setIsLoading(true)
 
         if (id !== undefined) {
             try {
@@ -83,6 +86,7 @@ function FormularioTema() {
             }
         }
 
+        setIsLoading(false)
         retornar()
     }
 
@@ -122,11 +126,19 @@ function FormularioTema() {
                         onChange={(e: ChangeEvent<HTMLInputElement>) => atualizarEstado(e)}
                     />
                 </div>
-                <button
-                    className="rounded text-slate-100 bg-indigo-400 hover:bg-indigo-800 w-1/2 py-2 mx-auto block"
-                    type="submit"
-                >
-                    {id === undefined ? 'Cadastrar' : 'Editar'}
+
+                <button type='submit' className="rounded text-slate-100 bg-indigo-400 hover:bg-indigo-800 w-1/2 py-2 flex justify-center mx-auto"
+                    >
+                    {isLoading ?
+                        <RotatingLines
+                            strokeColor="white"
+                            strokeWidth="5"
+                            animationDuration="0.75"
+                            width="24"
+                            visible={true}
+                        /> :
+                        <span>Confirmar</span>
+                    }
                 </button>
             </form>
         </div>
