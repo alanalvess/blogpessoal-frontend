@@ -1,12 +1,18 @@
-import { ChangeEvent, useEffect, useState } from 'react'
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react'
+import { RotatingLines } from 'react-loader-spinner'
 import { useNavigate } from 'react-router-dom'
-import Usuario from '../../models/Usuario'
+
 import { cadastrarUsuario } from '../../services/Service'
+import Usuario from '../../models/Usuario'
+
 import './Cadastro.css'
+import { toastAlerta } from '../../utils/ToastAlerta'
 
 function Cadastro() {
 
   const navigate = useNavigate()
+
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   const [confirmaSenha, setConfirmaSenha] = useState<string>("")
 
@@ -18,21 +24,29 @@ function Cadastro() {
     foto: ''
   })
 
-  const [usuarioResposta, setUsuarioResposta] = useState<Usuario>({
-    id: 0,
-    nome: '',
-    usuario: '',
-    senha: '',
-    foto: ''
-  })
+  async function cadastrarNovoUsuario(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (confirmaSenha === usuario.senha && usuario.senha.length >= 8) {
+      setIsLoading(true)
 
-  useEffect(() => {
-    if (usuarioResposta.id !== 0) {
-      back()
+      try {
+        await cadastrarUsuario(`/usuarios/cadastrar`, usuario, setUsuario)
+        toastAlerta('Usuário cadastrado com sucesso', 'sucesso')
+
+      } catch (error) {
+        toastAlerta('Erro ao cadastrar o Usuário', 'erro')
+      }
+
+    } else {
+      toastAlerta('Dados inconsistentes. Verifique as informações de cadastro.', 'erro')
+      setUsuario({ ...usuario, senha: "" })
+      setConfirmaSenha("")
     }
-  }, [usuarioResposta])
 
-  function back() {
+    setIsLoading(false)
+  }
+
+  function retornar() {
     navigate('/login')
   }
 
@@ -47,31 +61,20 @@ function Cadastro() {
     })
   }
 
-  async function cadastrarNovoUsuario(e: ChangeEvent<HTMLFormElement>) {
-    e.preventDefault()
-
-    if (confirmaSenha === usuario.senha && usuario.senha.length >= 8) {
-
-      try {
-        await cadastrarUsuario(`/usuarios/cadastrar`, usuario, setUsuarioResposta)
-        alert('Usuário cadastrado com sucesso')
-
-      } catch (error) {
-        alert('Erro ao cadastrar o Usuário')
-      }
-
-    } else {
-      alert('Dados inconsistentes. Verifique as informações de cadastro.')
-      setUsuario({ ...usuario, senha: "" }) // Reinicia o campo de Senha
-      setConfirmaSenha("")                  // Reinicia o campo de Confirmar Senha
+  useEffect(() => {
+    if (usuario.id !== 0) {
+      retornar()
     }
-  }
+  }, [usuario])
 
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-2 h-screen place-items-center font-bold">
         <div className="fundoCadastro hidden lg:block"></div>
-        <form className='flex justify-center items-center flex-col w-2/3 gap-3' onSubmit={cadastrarNovoUsuario}>
+        <form
+          className='flex justify-center items-center flex-col w-2/3 gap-3'
+          onSubmit={cadastrarNovoUsuario}
+        >
           <h2 className='text-slate-900 text-5xl'>Cadastrar</h2>
           <div className="flex flex-col w-full">
             <label htmlFor="nome">Nome</label>
@@ -134,11 +137,25 @@ function Cadastro() {
             />
           </div>
           <div className="flex justify-around w-full gap-8">
-            <button className='rounded text-white bg-red-400 hover:bg-red-700 w-1/2 py-2' onClick={back}>
+            <button
+              className='rounded text-white bg-red-400 hover:bg-red-700 w-1/2 py-2'
+              onClick={retornar}>
               Cancelar
             </button>
-            <button className='rounded text-white bg-indigo-400 hover:bg-indigo-900 w-1/2 py-2' type='submit'>
-              Cadastrar
+            <button
+              className='rounded text-white bg-indigo-400 hover:bg-indigo-900 w-1/2 
+                                       py-2 flex justify-center'
+              type='submit'>
+
+              {
+                isLoading ? <RotatingLines
+                  strokeColor="white"
+                  strokeWidth="5"
+                  animationDuration="0.75"
+                  width="24"
+                  visible={true}
+                /> :
+                  <span>Cadastrar</span>}
             </button>
           </div>
         </form>
